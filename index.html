@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Predictor de Diabetes</title>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+		rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+		crossorigin="anonymous"
+	/>
+	<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"
+		integrity="sha384-IQsoLXl5PILFhosVNubq5LC7Qb9DXgDA9i+tQ8Zj3iwWAwPtgFTxbJ8NT4GN1R8p"
+		crossorigin="anonymous">
+	</script>
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js"
+		integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF"
+		crossorigin="anonymous">
+	</script>
+</head>
+<script>
+	var coefs = {}, calculado = false;
+	coefs['intercept'] = -9.90934;
+	coefs['sexo'] = {};
+	coefs['sexo']['M'] = -5.03218;
+	coefs['sexo']['H'] = -4.76383;
+	coefs['sexo']['O'] = -0.113331;
+	coefs['edad'] = 0.0461395;
+	coefs['hipertension'] = {};
+	coefs['hipertension']['0'] = -5.33147;
+	coefs['hipertension']['1'] = -4.57786;
+	coefs['cardiaco'] = {};
+	coefs['cardiaco']['0'] = -5.32422;
+	coefs['cardiaco']['1'] = -4.58512;
+	coefs['tabaquismo'] = {};
+	coefs['tabaquismo']['I'] = -2.17356;
+	coefs['tabaquismo']['A'] = -1.43996;
+	coefs['tabaquismo']['S'] = -1.48597;
+	coefs['tabaquismo']['P'] = -1.54703;
+	coefs['tabaquismo']['N'] = -1.60345;
+	coefs['tabaquismo']['R'] = -1.65936;
+	coefs['imc'] = 0.088705;
+	coefs['hba1c'] = 2.33503;
+	coefs['glucosa'] = 0.0333465;
+	function calcular(){
+		var exponente = 0, resultado, porcentaje, quintilo;
+		exponente += Number($('#edad').val())*coefs['edad'];
+		exponente += coefs['sexo'][$('#sexo').val()];
+		exponente += coefs['hipertension'][$('#hipertension').val()];
+		exponente += coefs['cardiaco'][$('#cardiaco').val()];
+		exponente += coefs['tabaquismo'][$('#tabaquismo').val()];
+		exponente += Number($('#imc').val())*coefs['imc'];
+		exponente += Number($('#hba1c').val())*coefs['hba1c'];
+		exponente += Number($('#glucosa').val())*coefs['glucosa'];
+		exponente += coefs['intercept'];
+		resultado = 1/(1 + Math.exp(-exponente));
+		porcentaje = Math.round(resultado*100);
+		quintilo = Math.round(porcentaje/20);
+		if(quintilo == 1)
+			$('#modallbl').text('Tienes un riesgo mínimo.');
+		else if(quintilo == 2)
+			$('#modallbl').text('Tienes un riesgo moderado.');
+		else if(quintilo == 3)
+			$('#modallbl').text('Tienes un riesgo mediano.');
+		else if(quintilo == 4)
+			$('#modallbl').text('Tienes un riesgo considerable.');
+		else if(quintilo == 5)
+			$('#modallbl').text('Tienes un riesgo muy elevado.');
+		$('#porcentaje').text(`Calculamos ${porcentaje}% de posibilidad de que padezcas diabetes.`);
+	}
+</script>
+<body class="bg-dark d-flex flex-column min-vh-100 min-vw-100">
+	<div class="d-flex flex-grow-1 justify-content-center align-items-center">
+		<form onsubmit="event.preventDefault(); calcular()" class="d-grid gap-3 w-50">
+			<input class="form-control" type="number" id="edad" placeholder="Edad" min="1" max="120" required/>
+			<select class="form-control" id="sexo" required>
+				<option value="" selected disabled>Sexo</option>
+				<option value="H">Hombre</option>
+				<option value="M">Mujer</option>
+				<option value="O">Otro</option>
+			</select>
+			<select class="form-control" id="hipertension" required>
+				<option value="" selected disabled>Hipertensión</option>
+				<option value="1">Sí</option>
+				<option value="0">No</option>
+			</select>
+			<select class="form-control" id="cardiaco" required>
+				<option value="" selected disabled>Enfermedades cardíacas</option>
+				<option value="1">Sí</option>
+				<option value="0">No</option>
+			</select>
+			<select class="form-control" id="tabaquismo" required>
+				<option value="" selected disabled>Tabaquismo</option>
+				<option value="N">Nunca</option>
+				<option value="P">Anteriormente</option>
+				<option value="R">Abandonado recientemente</option>
+				<option value="A">Actualmente</option>
+				<option value="S">Siempre</option>
+				<option value="I">No se sabe</option>
+			</select>
+			<input class="form-control" type="number" id="imc" placeholder="IMC" min="0" step=".1" required/>
+			<input class="form-control" type="number" id="hba1c" placeholder="Nivel de HBA1C" min="0" step=".1" required/>
+			<input class="form-control" type="number" id="glucosa" placeholder="Nivel de glucosa en la sangre" step=".1" min="0" required/>
+			<button class="btn btn-primary w-50 mx-auto" type="submit" data-bs-toggle="modal" data-bs-target="#modalPorcentaje">Calcular resultado</button>
+		</form>
+	</div>
+	<div class="modal fade" id="modalPorcentaje" tabindex="-1" aria-labelledby="modallbl" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="modallbl"></h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body" id="cuerpo">
+					<p id="porcentaje"></p>
+					Te recomendamos que acudas con un profesional si tienes dudas.
+				</div>
+				<div class="modal-footer">
+					<p class="form-label mx-auto text-start">Recuerda que esto es únicamente informativo.</p>
+					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+</html>
